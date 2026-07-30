@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reminder Printer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main>
+    <h1>Reminder Printer</h1>
+    <p class="subtitle">Turn a reminder list into a clean thermal checklist.</p>
+    <form id="reminder-form">
+      <label for="title">List title</label>
+      <input id="title" name="title" value="Reminders" maxlength="200">
+      <label for="text">Reminders</label>
+      <textarea id="text" name="text" rows="12" required placeholder="[ ] Milk&#10;[x] Return package"></textarea>
+      <label class="check"><input type="checkbox" id="include-completed"> Include completed reminders</label>
+      <div class="actions">
+        <button type="button" id="preview">Preview</button>
+        <button type="submit" class="primary">Print</button>
+      </div>
+    </form>
+    <p id="message" role="status" aria-live="polite"></p>
+    <section id="preview-panel" hidden>
+      <h2>Receipt preview</h2>
+      <pre id="receipt" style="width: {{ width }}ch"></pre>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
+

@@ -1,0 +1,20 @@
+[Unit]
+Description=Reminder Printer web service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__SERVICE_USER__
+Group=__SERVICE_USER__
+WorkingDirectory=__REPOSITORY_PATH__
+EnvironmentFile=-/etc/reminder-printer.env
+ExecStart=__REPOSITORY_PATH__/.venv/bin/gunicorn --workers 1 --threads 4 --bind ${REMINDER_PRINTER_HOST}:${REMINDER_PRINTER_PORT} --access-logfile - --error-logfile - app:app
+Restart=on-failure
+RestartSec=3
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+

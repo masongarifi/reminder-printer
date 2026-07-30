@@ -1,0 +1,5 @@
+Flask==3.1.2
+filelock==3.18.0
+gunicorn==23.0.0
+python-escpos[usb]==3.1
+
