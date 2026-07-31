@@ -28,9 +28,9 @@ def test_multiple_reminders_plural():
 
 def test_long_reminder_wraps_and_indents():
     output = receipt([Reminder("A longer reminder that wraps cleanly")], width=20)
-    item_lines = [line for line in output.splitlines() if "longer" in line or "reminder" in line]
+    item_lines = output.split("\n\n", 4)[3].splitlines()
     assert item_lines[0].startswith("[ ] ")
-    assert item_lines[1].startswith("    ")
+    assert all(line.startswith("    ") for line in item_lines[1:])
 
 
 def test_completed_included():
@@ -77,3 +77,13 @@ def test_title_longer_than_width():
     output = format_receipt("This title is much longer than width", [], width=16, now=NOW)
     assert all(len(line) <= 16 for line in output.splitlines())
 
+
+def test_title_uses_no_alignment_padding_and_has_blank_line_after_it():
+    output = receipt([Reminder("Milk")])
+    assert output.startswith("GROCERY LIST\n\nThu Jul 30, 2026")
+
+
+def test_double_width_items_wrap_at_half_receipt_width():
+    output = receipt([Reminder("A reminder that needs wrapping")], width=42)
+    item_section = output.split("\n\n", 4)[3]
+    assert all(len(line) <= 21 for line in item_section.splitlines())

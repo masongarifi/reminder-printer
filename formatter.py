@@ -102,15 +102,26 @@ def format_receipt(
     now: datetime | None = None,
 ) -> str:
     width = max(16, int(width))
+    # Double-width ESC/POS text has half the normal character capacity.
+    large_width = max(8, width // 2)
     safe_title = ascii_safe(title).strip() or "Reminders"
-    title_lines = textwrap.wrap(safe_title.upper(), width=width, break_long_words=True) or ["REMINDERS"]
+    title_lines = textwrap.wrap(
+        safe_title.upper(), width=large_width, break_long_words=True
+    ) or ["REMINDERS"]
     date_line = (now or datetime.now()).strftime("%a %b %d, %Y")
     selected = [item for item in items if include_completed or not item.completed]
-    lines = [line.center(width).rstrip() for line in title_lines]
-    lines += [date_line.center(width).rstrip(), "", "-" * width, ""]
+    item_lines: list[str] = []
     for item in selected:
-        lines.extend(_wrap_item(item, width))
+        item_lines.extend(_wrap_item(item, large_width))
     count = len(selected)
-    lines += ["", f"{count} {'ITEM' if count == 1 else 'ITEMS'}"]
-    return "\n".join(lines)
-
+    # Blank-line-delimited sections let printer.py apply native ESC/POS styles
+    # without embedding alignment padding or control bytes in API previews.
+    return "\n\n".join(
+        [
+            "\n".join(title_lines),
+            date_line,
+            "-" * width,
+            "\n".join(item_lines),
+            f"{count} {'ITEM' if count == 1 else 'ITEMS'}",
+        ]
+    )

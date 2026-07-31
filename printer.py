@@ -29,11 +29,26 @@ def print_receipt(receipt: str) -> None:
                     out_ep=config.USB_OUT_EP,
                     timeout=0,
                 )
-                device.set(align="center", bold=True)
-                first, _, remainder = receipt.partition("\n")
-                device.text(first + "\n")
-                device.set(align="left", bold=False)
-                device.text(remainder + "\n")
+                sections = receipt.split("\n\n", 4)
+                if len(sections) != 5:
+                    raise PrinterError("Receipt has an invalid internal format.")
+                title, date_line, divider, item_lines, item_count = sections
+
+                device.set(align="center", bold=True, width=2, height=2)
+                device.text(title + "\n\n")
+
+                device.set(align="center", bold=False, width=1, height=1)
+                device.text(date_line + "\n\n")
+                device.set(align="left", bold=False, width=1, height=1)
+                device.text(divider + "\n\n")
+
+                if item_lines:
+                    device.set(align="left", bold=False, width=2, height=2)
+                    device.text(item_lines + "\n")
+
+                # Explicitly restore normal text before the footer, feed, and cut.
+                device.set(align="left", bold=False, width=1, height=1)
+                device.text("\n" + item_count + "\n")
                 if config.FEED_LINES:
                     device.text("\n" * config.FEED_LINES)
                 device.cut()
@@ -51,4 +66,3 @@ def print_receipt(receipt: str) -> None:
             "has USB permission (udev rule or lp group)."
         )
         raise PrinterError(f"Unable to print: {message}.{hint}") from exc
-
