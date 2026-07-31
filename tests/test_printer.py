@@ -49,12 +49,27 @@ def test_native_double_size_alignment_and_reset_before_cut(monkeypatch, tmp_path
     title_text_index = events.index(("text", "GROCERY LIST\n\n"))
     assert events[title_text_index - 1] == ("raw", b"\x1d\x21\x11")
 
+    date_text_index = events.index(("text", "Thu Jul 30, 2026\n\n"))
+    assert events[date_text_index - 2] == (
+        "set",
+        {"align": "center", "bold": False},
+    )
+    assert events[date_text_index - 1] == ("raw", b"\x1d\x21\x01")
+    assert events[date_text_index + 1] == ("raw", b"\x1d\x21\x00")
+
     reminder_text_index = events.index(("text", "[ ] Milk\n[ ] Bread\n"))
     assert events[reminder_text_index - 1] == ("raw", b"\x1d\x21\x11")
     assert events[reminder_text_index + 1] == ("raw", b"\x1d\x21\x00")
 
+    count_text_index = events.index(("text", "\n2 ITEMS\n"))
+    assert events[count_text_index - 2] == (
+        "set",
+        {"align": "center", "bold": False},
+    )
+    assert events[count_text_index - 1] == ("raw", b"\x1d\x21\x01")
+    assert events[count_text_index + 1] == ("raw", b"\x1d\x21\x00")
+
     cut_index = events.index(("cut",))
     assert events[cut_index - 1] == ("text", "\n" * 3)
-    assert events[cut_index - 2] == ("text", "\n2 ITEMS\n")
-    assert events[cut_index - 3] == ("raw", b"\x1d\x21\x00")
+    assert events[cut_index - 2] == ("raw", b"\x1d\x21\x00")
     assert events[-1] == ("close",)

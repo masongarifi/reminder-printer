@@ -6,6 +6,7 @@ from filelock import FileLock, Timeout
 import config
 
 DOUBLE_SIZE = b"\x1d\x21\x11"
+MEDIUM_SIZE = b"\x1d\x21\x01"
 NORMAL_SIZE = b"\x1d\x21\x00"
 
 
@@ -46,7 +47,9 @@ def print_receipt(receipt: str) -> None:
                 device._raw(NORMAL_SIZE)
 
                 device.set(align="center", bold=False)
+                device._raw(MEDIUM_SIZE)
                 device.text(date_line + "\n\n")
+                device._raw(NORMAL_SIZE)
                 device.set(align="left", bold=False)
                 device.text(divider + "\n\n")
 
@@ -58,9 +61,11 @@ def print_receipt(receipt: str) -> None:
                     device.text(item_lines + "\n")
                     device._raw(NORMAL_SIZE)
 
-                # Keep subsequent jobs safe even when there are no reminder lines.
-                device._raw(NORMAL_SIZE)
+                device.set(align="center", bold=False)
+                device._raw(MEDIUM_SIZE)
                 device.text("\n" + item_count + "\n")
+                # Keep subsequent jobs safe before feeding and cutting.
+                device._raw(NORMAL_SIZE)
                 if config.FEED_LINES:
                     device.text("\n" * config.FEED_LINES)
                 device.cut()
