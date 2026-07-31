@@ -18,6 +18,9 @@ class FakeUsb:
     def text(self, value):
         self.events.append(("text", value))
 
+    def _raw(self, value):
+        self.events.append(("raw", value))
+
     def cut(self):
         self.events.append(("cut",))
 
@@ -43,20 +46,15 @@ def test_native_double_size_alignment_and_reset_before_cut(monkeypatch, tmp_path
     printer.print_receipt(receipt)
     events = FakeUsb.instances[-1].events
 
-    assert events[0] == (
-        "set",
-        {"align": "center", "bold": True, "width": 2, "height": 2},
-    )
-    assert ("text", "GROCERY LIST\n\n") in events
-    assert (
-        "set",
-        {"align": "left", "bold": False, "width": 2, "height": 2},
-    ) in events
+    title_text_index = events.index(("text", "GROCERY LIST\n\n"))
+    assert events[title_text_index - 1] == ("raw", b"\x1d\x21\x11")
+
+    reminder_text_index = events.index(("text", "[ ] Milk\n[ ] Bread\n"))
+    assert events[reminder_text_index - 1] == ("raw", b"\x1d\x21\x11")
+    assert events[reminder_text_index + 1] == ("raw", b"\x1d\x21\x00")
+
     cut_index = events.index(("cut",))
     assert events[cut_index - 1] == ("text", "\n" * 3)
     assert events[cut_index - 2] == ("text", "\n2 ITEMS\n")
-    assert events[cut_index - 3] == (
-        "set",
-        {"align": "left", "bold": False, "width": 1, "height": 1},
-    )
+    assert events[cut_index - 3] == ("raw", b"\x1d\x21\x00")
     assert events[-1] == ("close",)

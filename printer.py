@@ -5,6 +5,9 @@ from filelock import FileLock, Timeout
 
 import config
 
+DOUBLE_SIZE = b"\x1d\x21\x11"
+NORMAL_SIZE = b"\x1d\x21\x00"
+
 
 class PrinterError(RuntimeError):
     pass
@@ -34,20 +37,29 @@ def print_receipt(receipt: str) -> None:
                     raise PrinterError("Receipt has an invalid internal format.")
                 title, date_line, divider, item_lines, item_count = sections
 
-                device.set(align="center", bold=True, width=2, height=2)
+                # Configure alignment/emphasis first because some printers or
+                # python-escpos versions emit a size command from set().
+                # GS ! is deliberately the final command before enlarged text.
+                device.set(align="center", bold=True)
+                device._raw(DOUBLE_SIZE)
                 device.text(title + "\n\n")
+                device._raw(NORMAL_SIZE)
 
-                device.set(align="center", bold=False, width=1, height=1)
+                device.set(align="center", bold=False)
                 device.text(date_line + "\n\n")
-                device.set(align="left", bold=False, width=1, height=1)
+                device.set(align="left", bold=False)
                 device.text(divider + "\n\n")
 
                 if item_lines:
-                    device.set(align="left", bold=False, width=2, height=2)
+                    # No formatting or initialization command may occur between
+                    # this raw GS ! command and the reminder text.
+                    device.set(align="left", bold=False)
+                    device._raw(DOUBLE_SIZE)
                     device.text(item_lines + "\n")
+                    device._raw(NORMAL_SIZE)
 
-                # Explicitly restore normal text before the footer, feed, and cut.
-                device.set(align="left", bold=False, width=1, height=1)
+                # Keep subsequent jobs safe even when there are no reminder lines.
+                device._raw(NORMAL_SIZE)
                 device.text("\n" + item_count + "\n")
                 if config.FEED_LINES:
                     device.text("\n" * config.FEED_LINES)
